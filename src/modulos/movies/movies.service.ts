@@ -22,8 +22,8 @@ export class MovieService {
   findOne(id: number) {
     return this.movieRepository.findOne({ where: { id } });
   }
-  create(createPokemonDto: CreateMovieDto) {
-      const pokemon = this.movieRepository.create(createPokemonDto);
-      return this.movieRepository.save(pokemon);
+  create(createMovieDto: CreateMovieDto) {
+      const movies = this.movieRepository.create(createMovieDto);
+      return this.movieRepository.save(movies);
     }
 }

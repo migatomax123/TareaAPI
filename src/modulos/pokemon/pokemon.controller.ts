@@ -1,27 +1,32 @@
-import { Controller, Get, Post, Body, Param, Query } from '@nestjs/common';
+// pokemon.controller.ts
+// pokemon.controller.ts (versión básica)
+import { Controller, Get, Query, Post, Body, Delete, Param } from '@nestjs/common';
 import { PokemonService } from './pokemon.service';
-import { CreatePokemonDto } from './dto/create-pokemon.dto';
 
 @Controller('pokemon')
 export class PokemonController {
   constructor(private readonly pokemonService: PokemonService) {}
 
   @Post()
-  create(@Body() createPokemonDto: CreatePokemonDto) {
-    return this.pokemonService.create(createPokemonDto);
+  async create(@Body() body: any): Promise<any> {
+    return this.pokemonService.create(body);
+  }
+
+  @Get('search')
+  async findByTitle(@Query('title') title: string): Promise<any> {
+    if (!title) {
+      return { message: 'Por favor, proporciona un título para buscar.' };
+    }
+    return this.pokemonService.findByTitle(title);
   }
 
   @Get()
-  findAll(
-    @Query('name') name?: string,
-    @Query('type') type?: string,
-    @Query('minHp') minHp?: number,
-  ) {
-    return this.pokemonService.findAll({ name, type, minHp });
+  async findAll(): Promise<any[]> {
+    return this.pokemonService.findAll();
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.pokemonService.findOne(+id);
+  @Delete(':id')
+  async remove(@Param('id') id: string): Promise<any> {
+    return this.pokemonService.remove(+id);
   }
 }

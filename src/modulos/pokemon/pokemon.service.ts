@@ -1,8 +1,10 @@
-import { Injectable } from '@nestjs/common';
+// pokemon.service.ts
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Pokemon } from './entities/pokemon.entity';
 import { CreatePokemonDto } from './dto/create-pokemon.dto';
+import { UpdatePokemonDto } from './dto/update-controller.dto';
 
 @Injectable()
 export class PokemonService {
@@ -11,28 +13,39 @@ export class PokemonService {
     private readonly pokemonRepository: Repository<Pokemon>,
   ) {}
 
-  create(createPokemonDto: CreatePokemonDto) {
+  async create(createPokemonDto: CreatePokemonDto): Promise<Pokemon> {
     const pokemon = this.pokemonRepository.create(createPokemonDto);
-    return this.pokemonRepository.save(pokemon);
+    return await this.pokemonRepository.save(pokemon);
   }
 
-  findAll(filter?: { name?: string; type?: string; minHp?: number }) {
-    const query = this.pokemonRepository.createQueryBuilder('pokemon');
-
-    if (filter?.name) {
-      query.andWhere('pokemon.name LIKE :name', { name: `%${filter.name}%` });
-    }
-    if (filter?.type) {
-      query.andWhere('pokemon.type = :type', { type: filter.type });
-    }
-    if (filter?.minHp) {
-      query.andWhere('pokemon.hp >= :minHp', { minHp: filter.minHp });
-    }
-
-    return query.getMany();
+  async findAll(): Promise<Pokemon[]> {
+    return await this.pokemonRepository.find();
   }
 
-  findOne(id: number) {
-    return this.pokemonRepository.findOne({ where: { id } });
+  async findOne(id: number): Promise<Pokemon | undefined> {
+    return await this.pokemonRepository.findOneBy({ id });
+  }
+
+  async findByTitle(title: string): Promise<Pokemon[]> {
+    return await this.pokemonRepository.findBy({ title });
+  }
+
+  async update(
+    id: number,
+    updatePokemonDto: UpdatePokemonDto,
+  ): Promise<Pokemon | undefined> {
+    const pokemon = await this.findOne(id);
+    if (!pokemon) {
+      return undefined;
+    }
+    await this.pokemonRepository.update(id, updatePokemonDto);
+    return await this.findOne(id);
+  }
+
+  async remove(id: number): Promise<void> {
+    const result = await this.pokemonRepository.delete(id);
+    if (result.affected === 0) {
+      throw new NotFoundException(`Pokemon con ID "${id}" no encontrado`);
+    }
   }
 }

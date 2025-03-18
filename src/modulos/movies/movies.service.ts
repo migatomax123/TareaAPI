@@ -1,8 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Movie } from './entities/movies.entity';
 import { CreateMovieDto } from './dto/create-movies.dto';
+import { UpdateMovieDto } from './dto/update-movies.dto';
 
 @Injectable()
 export class MovieService {
@@ -11,19 +12,39 @@ export class MovieService {
     private readonly movieRepository: Repository<Movie>,
   ) {}
 
-  findAll(): Promise<Movie[]> {
+  async findAll(): Promise<Movie[]> {
     return this.movieRepository.find();
   }
 
-  findByTitle(title: string): Promise<Movie[]> {
-    return this.movieRepository.find({ where: { title } });
+  async findOne(id: number): Promise<Movie> {
+    const movie = await this.movieRepository.findOneBy({ id });
+    if (!movie) {
+      throw new NotFoundException(`Movie with ID "${id}" not found`);
+    }
+    return movie;
   }
 
-  findOne(id: number) {
-    return this.movieRepository.findOne({ where: { id } });
+  async create(createMovieDto: CreateMovieDto): Promise<Movie> {
+    const movie = this.movieRepository.create(createMovieDto);
+    return this.movieRepository.save(movie);
   }
-  create(createMovieDto: CreateMovieDto) {
-      const movies = this.movieRepository.create(createMovieDto);
-      return this.movieRepository.save(movies);
+
+  async update(id: number, updateMovieDto: UpdateMovieDto): Promise<Movie> {
+    const movie = await this.movieRepository.findOneBy({ id });
+    if (!movie) {
+      throw new NotFoundException(`Movie with ID "${id}" not found`);
     }
+
+    Object.assign(movie, updateMovieDto);
+
+    return this.movieRepository.save(movie);
+  }
+
+  async remove(id: number): Promise<void> {
+    const movie = await this.movieRepository.findOneBy({ id });
+    if (!movie) {
+      throw new NotFoundException(`Movie with ID "${id}" not found`);
+    }
+    await this.movieRepository.remove(movie);
+  }
 }
